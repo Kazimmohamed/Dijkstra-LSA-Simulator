@@ -53,6 +53,13 @@ int main() {
 
     network.printAllLSDBs();
 
+    std::cout
+        << "\nInitial LSDB synchronized: "
+        << (network.areLSDBsSynchronized() ? "yes" : "no")
+        << "\n";
+
+    network.printAllRoutingTables();
+
     // ==========================================
     // REMOVE LINK
     // ==========================================
@@ -83,6 +90,13 @@ int main() {
 
     network.printAllLSDBs();
 
+    std::cout
+        << "\nUpdated LSDB synchronized: "
+        << (network.areLSDBsSynchronized() ? "yes" : "no")
+        << "\n";
+
+    network.printAllRoutingTables();
+
     // ==========================================
     // ADD LINK BACK
     // ==========================================
@@ -111,10 +125,27 @@ int main() {
 
     network.printAllLSDBs();
 
+    std::cout
+        << "\nFinal LSDB synchronized: "
+        << (network.areLSDBsSynchronized() ? "yes" : "no")
+        << "\n";
+
+    network.printAllRoutingTables();
+
     // ==========================================
     // END
     // ==========================================
     network.exportTopologyCSV("topology.csv");
+    network.exportRoutingTablesCSV("routing_tables.csv");
+    Network::runMeasurementExperiments(
+        "spf_results.csv",
+        "convergence_results.csv",
+        4,
+        64,
+        4,
+        5
+    );
+
     std::cout << "\nSimulation completed.\n";
 
     return 0;
