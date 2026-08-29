@@ -2,3 +2,5 @@
 *.o
 *.obj
 .vscode/
+.python_packages/
+.matplotlib_cache/

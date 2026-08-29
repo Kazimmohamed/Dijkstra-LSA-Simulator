@@ -1,15 +1,25 @@
 import csv
 import heapq
 import math
+import os
+import site
+import sys
 from pathlib import Path
 from collections import defaultdict
 
-try:
-    import matplotlib.pyplot as plt
-    HAS_MATPLOTLIB = True
-except ModuleNotFoundError:
-    plt = None
-    HAS_MATPLOTLIB = False
+local_package_dir = Path(__file__).resolve().parent / ".python_packages"
+matplotlib_cache_dir = Path(__file__).resolve().parent / ".matplotlib_cache"
+user_site_packages = site.getusersitepackages()
+
+os.environ.setdefault("MPLCONFIGDIR", str(matplotlib_cache_dir))
+
+if local_package_dir.exists():
+    sys.path.insert(0, str(local_package_dir))
+
+if user_site_packages not in sys.path:
+    sys.path.append(user_site_packages)
+
+import matplotlib.pyplot as plt
 
 
 class Network:
@@ -167,48 +177,6 @@ def plot_topology(network, output_filename):
         angle = 2.0 * math.pi * index / len(routers)
         positions[router] = (math.cos(angle), math.sin(angle))
 
-    if not HAS_MATPLOTLIB:
-        svg_filename = output_filename.with_suffix(".svg")
-        width = 700
-        height = 700
-        center = width / 2
-        scale = 250
-        printed_links = set()
-        lines = [
-            '<svg xmlns="http://www.w3.org/2000/svg" width="700" height="700" viewBox="0 0 700 700">',
-            '<rect width="700" height="700" fill="white"/>',
-            '<text x="350" y="35" text-anchor="middle" font-family="Arial" font-size="22">Final 4-Router LSA Topology</text>',
-        ]
-
-        for source in routers:
-            for destination, cost in network.graph[source].items():
-                link = tuple(sorted((source, destination)))
-
-                if link in printed_links:
-                    continue
-
-                printed_links.add(link)
-                x1 = center + positions[source][0] * scale
-                y1 = center + positions[source][1] * scale
-                x2 = center + positions[destination][0] * scale
-                y2 = center + positions[destination][1] * scale
-                mx = (x1 + x2) / 2
-                my = (y1 + y2) / 2
-                lines.append(f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke="#6c757d" stroke-width="3"/>')
-                lines.append(f'<rect x="{mx - 14:.1f}" y="{my - 13:.1f}" width="28" height="22" rx="4" fill="white" stroke="#adb5bd"/>')
-                lines.append(f'<text x="{mx:.1f}" y="{my + 5:.1f}" text-anchor="middle" font-family="Arial" font-size="14">{cost}</text>')
-
-        for router in routers:
-            x = center + positions[router][0] * scale
-            y = center + positions[router][1] * scale
-            lines.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="34" fill="#2b8a3e"/>')
-            lines.append(f'<text x="{x:.1f}" y="{y + 6:.1f}" text-anchor="middle" font-family="Arial" font-size="20" font-weight="bold" fill="white">{router}</text>')
-
-        lines.append("</svg>")
-        svg_filename.write_text("\n".join(lines), encoding="utf-8")
-        print(f"Topology visualization saved to {svg_filename}")
-        return
-
     plt.figure(figsize=(7, 7))
     printed_links = set()
 
@@ -268,88 +236,12 @@ def average_by_network_size(rows, value_field):
     ]
 
 
-def write_line_chart_svg(points, output_filename, title, x_label, y_label, color):
-
-    width = 800
-    height = 500
-    left = 85
-    right = 35
-    top = 60
-    bottom = 75
-    plot_width = width - left - right
-    plot_height = height - top - bottom
-
-    x_values = [point[0] for point in points]
-    y_values = [point[1] for point in points]
-    min_x = min(x_values)
-    max_x = max(x_values)
-    min_y = 0
-    max_y = max(y_values) if max(y_values) > 0 else 1
-
-    def scale_x(value):
-        if max_x == min_x:
-            return left + plot_width / 2
-
-        return left + (value - min_x) / (max_x - min_x) * plot_width
-
-    def scale_y(value):
-        return top + plot_height - (value - min_y) / (max_y - min_y) * plot_height
-
-    scaled_points = [(scale_x(x), scale_y(y)) for x, y in points]
-    polyline_points = " ".join(f"{x:.1f},{y:.1f}" for x, y in scaled_points)
-
-    lines = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
-        f'<rect width="{width}" height="{height}" fill="white"/>',
-        f'<text x="{width / 2}" y="32" text-anchor="middle" font-family="Arial" font-size="21">{title}</text>',
-        f'<line x1="{left}" y1="{top}" x2="{left}" y2="{top + plot_height}" stroke="#343a40" stroke-width="1.5"/>',
-        f'<line x1="{left}" y1="{top + plot_height}" x2="{left + plot_width}" y2="{top + plot_height}" stroke="#343a40" stroke-width="1.5"/>',
-    ]
-
-    for tick in range(6):
-        y_value = min_y + (max_y - min_y) * tick / 5
-        y = scale_y(y_value)
-        lines.append(f'<line x1="{left}" y1="{y:.1f}" x2="{left + plot_width}" y2="{y:.1f}" stroke="#dee2e6" stroke-width="1"/>')
-        lines.append(f'<text x="{left - 10}" y="{y + 4:.1f}" text-anchor="end" font-family="Arial" font-size="12">{y_value:.1f}</text>')
-
-    for x_value in x_values:
-        x = scale_x(x_value)
-        lines.append(f'<line x1="{x:.1f}" y1="{top + plot_height}" x2="{x:.1f}" y2="{top + plot_height + 5}" stroke="#343a40" stroke-width="1"/>')
-        lines.append(f'<text x="{x:.1f}" y="{top + plot_height + 22}" text-anchor="middle" font-family="Arial" font-size="12">{x_value}</text>')
-
-    lines.append(f'<polyline points="{polyline_points}" fill="none" stroke="{color}" stroke-width="3"/>')
-
-    for index, (x, y) in enumerate(scaled_points):
-        original_y = y_values[index]
-        lines.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="5" fill="{color}"/>')
-        lines.append(f'<text x="{x:.1f}" y="{y - 10:.1f}" text-anchor="middle" font-family="Arial" font-size="11">{original_y:.1f}</text>')
-
-    lines.append(f'<text x="{width / 2}" y="{height - 18}" text-anchor="middle" font-family="Arial" font-size="14">{x_label}</text>')
-    lines.append(f'<text x="18" y="{height / 2}" text-anchor="middle" font-family="Arial" font-size="14" transform="rotate(-90 18 {height / 2})">{y_label}</text>')
-    lines.append("</svg>")
-
-    output_filename.write_text("\n".join(lines), encoding="utf-8")
-
-
 def plot_spf_results(rows, output_filename):
 
     if not rows:
         return
 
     averages = average_by_network_size(rows, "avg_time_us")
-
-    if not HAS_MATPLOTLIB:
-        svg_filename = output_filename.with_suffix(".svg")
-        write_line_chart_svg(
-            averages,
-            svg_filename,
-            "Dijkstra SPF Execution Time vs Network Size",
-            "Network size (routers)",
-            "Average SPF time per source (microseconds)",
-            "#1c7ed6",
-        )
-        print(f"SPF timing visualization saved to {svg_filename}")
-        return
 
     plt.figure(figsize=(8, 5))
     plt.plot(
@@ -375,19 +267,6 @@ def plot_convergence_results(rows, output_filename):
         return
 
     averages = average_by_network_size(rows, "total_flooding_iterations")
-
-    if not HAS_MATPLOTLIB:
-        svg_filename = output_filename.with_suffix(".svg")
-        write_line_chart_svg(
-            averages,
-            svg_filename,
-            "LSA Flooding Convergence Iterations vs Network Size",
-            "Network size (routers)",
-            "Average total flooding iterations",
-            "#e67700",
-        )
-        print(f"Convergence visualization saved to {svg_filename}")
-        return
 
     plt.figure(figsize=(8, 5))
     plt.plot(
