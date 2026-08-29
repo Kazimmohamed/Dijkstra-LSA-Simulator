@@ -1,7 +1,3 @@
-Absolutely. Below is a **complete `README.md`** tailored to the project you actually built. It avoids unnecessary textbook-style content and focuses on your implementation, outputs, experiments, and commands.
-
-Create a new file named **`README.md`** in your repository and paste this:
-
 ````markdown
 # Dijkstra Link-State Routing Engine with LSA Flooding Simulation
 
@@ -575,6 +571,4 @@ git commit -m "Add project documentation and results"
 git push origin main
 ```
 
-Then open the GitHub repository. **The README will automatically appear on the repository's front page**, with your three graphs displayed directly underneath the relevant sections.
 
-That gives you a much more complete submission: **source code + actual CSV results + actual graphs + reproducible commands + references**, without needing a separate report unless your college later explicitly asks for one.
