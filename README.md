@@ -241,11 +241,19 @@ They are stored in the `results` folder:
 
 ## Visualizations
 
-The generated graphs are stored in the `visualization` folder:
+The generated graphs are stored in the `visualization` folder.
 
-- Network Topology
-- SPF Execution Time
-- Convergence Iterations
+### Network Topology
+
+![Network Topology](visualization/topology_graph.png)
+
+### SPF Execution Time
+
+![SPF Execution Time](visualization/spf_execution_time.png)
+
+### Convergence Iterations
+
+![Convergence Iterations](visualization/convergence_iterations.png)
 
 ### Performance Measurement
 
